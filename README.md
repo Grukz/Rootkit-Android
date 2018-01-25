@@ -17,6 +17,19 @@ Flash the Kernel
 
 There are two version presented to flash the kernel:
 
+N00d1e5 Version
+---------------
+* Create a device with avdmanager `./android create avd -n <avd_name> -t 1`
+* Clone the Google Git of [Goldfish](http://android.googlesource.com/kernel/goldfish)
+* Add Android NDK to the PATH
+`export PATH=$PATH:<NDK_PATH>/android-ndk-r8-crystax/toolchains/arm-linux-androideabi-4.6/prebuilt/linux-x86_64/bin`
+* Create a Makefile with `ARCH := arm` and `CROSS_COMPILE := arm-linux-androideabi-`
+* Run `make goldfish_defconfig`
+* Then `make menuconfig`
+* Enable the `loadable module support`, also `Forced module loading`, `Module unloading` and `Module versioning support` in it.
+* Run the emulator `./emulator -avd <avd_name> -kernel <zImage_path>/zImage &`
+
+
 Nillyr Version
 --------------
 * Create a device with avdmanager from android sdk (e.g: Nexus S with Android 2.3)
@@ -35,5 +48,16 @@ Forced module unloading (MODULE_FORCE_UNLOAD) [N/y/?] (NEW) y
 Module versioning support (MODVERSIONS) [N/y/?] (NEW) y
 Source checksum for all modules (MODULE_SRCVERSION_ALL) [N/y/?] (NEW) y
 ```
-Everything else is 'N'
+Everything else is 'N'.
+
+
+The Read-Only Issue
+-------------------
+
+Usually, the device is read-only. Here is a quick tip.
+```bash
+$ adb shell
+# mount -o rw,remount rootfs /
+# chmod 777 /mnt/sdcard
+```
 
