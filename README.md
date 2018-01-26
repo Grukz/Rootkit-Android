@@ -7,7 +7,7 @@ End of studies' [project](https://mastercsi.labri.fr/wp-content/uploads/2017/12/
 - Ubuntu 12.04
 - [Android SDK](https://developer.android.com/studio/index.html#command-tools)
 - Kernel tree from [here](https://android.googlesource.com/kernel/goldfish)
-- Using Android NDK / Google toolchain
+- Using Android NDK / [Google toolchain](https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6)
 
 # Flash the Kernel
 
