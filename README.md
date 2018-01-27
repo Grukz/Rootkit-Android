@@ -2,18 +2,18 @@
 
 End of studies' [project](https://mastercsi.labri.fr/wp-content/uploads/2017/12/PER18.pdf) based on "Android platform based linux kernel rootkit".
 
-# Environment Specs
+## Environment Specs
 
 - Ubuntu 12.04
 - [Android SDK](https://developer.android.com/studio/index.html#command-tools)
 - Kernel tree from [here](https://android.googlesource.com/kernel/goldfish)
 - Using Android NDK / [Google toolchain](https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6)
 
-# Flash the Kernel
+## Flash the Kernel
 
 There are two version presented to flash the kernel:
 
-## N00d1e5 Version
+### N00d1e5 Version
 
 - Create a device with avdmanager `./android create avd -n <avd_name> -t 1`
 - Clone the Google Git of [Goldfish](http://android.googlesource.com/kernel/goldfish)
@@ -21,10 +21,10 @@ There are two version presented to flash the kernel:
 - Modify Makefile of Goldfish with `ARCH := arm` and `CROSS_COMPILE := arm-linux-androideabi-`
 - Run `make goldfish_defconfig` for Android 2.0 or `make goldfish_armv7_defconfig` for Android 4.0.
 - Then `make menuconfig`
-- Enable the `loadable module support`, also `Forced module loading`, `Module unloading` and `Module versioning support` in it.
+- Enable the `loadable module support`, also `Forced module loading`, `Module unloading` and `Forced module unloading` in it.
 - Run the emulator `./emulator -avd <avd_name> -kernel <zImage_path>/zImage &`
 
-## Nillyr Version
+### Nillyr Version
 
 - Create a device with avdmanager from android sdk (e.g: Nexus S with Android 2.3)
 - Run the emulator: `emulator @Nexus_S -show-kernel`
@@ -46,7 +46,7 @@ Source checksum for all modules (MODULE_SRCVERSION_ALL) [N/y/?] (NEW) y
 
 Everything else is 'N'.
 
-## The Read-Only Issue
+### The Read-Only Issue
 
 Usually, the device is read-only. Here is a quick tip.
 
