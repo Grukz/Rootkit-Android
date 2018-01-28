@@ -9,7 +9,7 @@ End of studies' [project](https://mastercsi.labri.fr/wp-content/uploads/2017/12/
 - Kernel tree from [here](https://android.googlesource.com/kernel/goldfish)
 - Using Android NDK / [Google toolchain](https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-eabi-4.6)
 
-## Flash the Kernel
+## Kernel mode - Build the Kernel for Modules support
 
 There are two version presented to flash the kernel:
 
@@ -55,3 +55,6 @@ $ adb shell
 # mount -o rw,remount rootfs /
 # chmod 777 /mnt/sdcard
 ```
+
+## TODO: Usermode rootkit
+
