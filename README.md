@@ -56,5 +56,3 @@ $ adb shell
 # chmod 777 /mnt/sdcard
 ```
 
-## TODO: Usermode rootkit
-
