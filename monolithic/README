@@ -1,0 +1,15 @@
+
+Ajout d'un appel système chargé de faire un bin-shell.
+
+Il faut malheureusement faire des manipulation préalable.
+
+Il faut compiler reverse_shell.s pour l'architecture spécifique.
+
+Compiler dans utils/ format_payload
+
+Faire : objdump -d -z reverse_shell | format_payload
+
+Changer le reverse_bind_shell du rootkit par le nouveau payload.
+
+
+Puis on peut lancer le rootkit.
